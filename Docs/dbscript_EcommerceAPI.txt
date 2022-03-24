@@ -1,0 +1,208 @@
+USE [Ecommercedb]
+GO
+
+/****** Object: Table [dbo].[Product] Script Date: 24/03/2022 5:37:53 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[Product] (
+    [Id]          INT             IDENTITY (0, 1) NOT NULL,
+    [ProdName]    VARCHAR (50)    NOT NULL,
+    [Description] VARCHAR (500)   NULL,
+    [Price]       DECIMAL (10, 2) NOT NULL
+);
+
+USE [Ecommercedb]
+GO
+
+/****** Object: SqlProcedure [dbo].[SP_ChkDuplicate] Script Date: 24/03/2022 5:38:47 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+CREATE PROCEDURE [dbo].[SP_ChkDuplicate]
+-- Add the parameters for the stored procedure here
+(
+@eId int,
+@eCho varchar(1),
+@eFieldName varchar(10),
+@eval varchar(50),
+@eTableName varchar(20)
+)
+ AS
+ 
+	DECLARE @SqlQry nvarchar(max)
+	DECLARE @mDupName varchar(500)
+	DECLARE @mTableName varchar(50)
+    
+BEGIN Try
+-- SET NOCOUNT ON added to prevent extra result sets from
+-- interfering with SELECT statements.
+SET NOCOUNT ON;
+ Begin
+
+    set @mTableName = @eTableName
+
+	if (@eCho = '1')
+	Begin
+		set @SqlQry = 'select  ISNULL(count(*), 0) as mcnt from '+ @eTableName +  ' where '  + UPPER(@eFieldName) + '=' + '''' + UPPER(@eval) + + ''''
+	End
+
+	if (@eCho = '2')
+	Begin
+		set @SqlQry = 'select  ISNULL(count(*), 0) as mcnt from '+ @eTableName +  ' where '  + UPPER(@eFieldName) + '=' + '''' + UPPER(@eval) + + '''' + ' and Id <> ' + Convert(varchar(10),@eId)
+	End
+
+
+	--select   @SqlQry
+	exec (@SqlQry)
+	--exec @SqlQry 
+
+   END
+   
+end Try
+begin catch
+select 'FAILED'
+END catch
+
+USE [Ecommercedb]
+GO
+
+/****** Object: SqlProcedure [dbo].[SP_GetProducts] Script Date: 24/03/2022 5:39:16 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[SP_GetProducts]
+(
+@eCh varchar(3)
+)	
+AS
+	SELECT id as mId, ProdName as mProdName, Description as mDescription, Price as mPrice from Product
+
+
+USE [Ecommercedb]
+GO
+
+/****** Object: SqlProcedure [dbo].[SP_InsertUpdateProduct] Script Date: 24/03/2022 5:39:54 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+CREATE PROCEDURE [dbo].[SP_InsertUpdateProduct]
+(																							
+@eId int,																							
+@eProdName varchar(50),																							
+@eDescription varchar(500),																							
+@ePrice Decimal(10,2),
+@eUpdate_Mode char(1)
+)																							
+As																							
+Declare @ProdNo int	
+
+Begin			
+
+if @eUpdate_Mode = 'A'																							
+Begin																						
+																							
+Insert Into Product (ProdName, Description, Price)
+Values (@eProdName, @eDescription, @ePrice)		
+
+Set @ProdNo = (select @@IDENTITY)
+
+Select 'SUCCESS' 
+End
+
+if @eUpdate_Mode = 'E'																							
+Begin							
+Update Product Set 	
+ProdName = @eProdName, 	Description = @eDescription, Price = @ePrice where id = @eId
+Select 'SUCCESS'
+End	
+End
+
+USE [Ecommercedb]
+GO
+
+/****** Object: SqlProcedure [dbo].[SP_EditProduct] Script Date: 24/03/2022 5:40:33 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+CREATE PROCEDURE [dbo].[SP_EditProduct]
+	@eId int
+ AS
+  Declare @CNT int
+begin try
+			   Begin
+
+			   set @CNT = (select id from product where id = @eId)
+			   
+			   if (@CNT > 0)
+			   Begin
+				SELECT id as mId, ProdName as mProdName, Description as mDescription, Price as mPrice from Product
+			    where id = @eId
+			   end
+			   else
+			   Begin
+			   Select 'No Data Found'
+			   End
+			   end
+  end try
+  begin catch
+	select 'Failed'
+  end catch
+
+USE [Ecommercedb]
+GO
+
+/****** Object: SqlProcedure [dbo].[SP_DeleteProduct] Script Date: 24/03/2022 5:41:01 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+CREATE PROCEDURE [dbo].[SP_DeleteProduct]
+	@eId int
+ AS
+  Declare @CNT int
+begin try
+			   Begin
+
+			   set @CNT = (select id from product where id = @eId)
+			   
+			   if (@CNT > 0)
+			   Begin
+			    delete Product where id = @eId
+				Select 'SUCCESS'
+			   end
+			   else
+			   Begin
+			   Select 'No Data Found'
+			   End
+			   end
+  end try
+  begin catch
+	select 'Failed'
+  end catch
